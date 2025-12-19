@@ -1,0 +1,13 @@
+{
+  "name": "monday-telegram-notifier",
+  "version": "1.0.0",
+  "description": "Notifies Telegram when new items are added to Monday.com board",
+  "main": "api/webhook.js",
+  "scripts": {
+    "test": "echo \"No tests specified\""
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.x"
+  }
+}
