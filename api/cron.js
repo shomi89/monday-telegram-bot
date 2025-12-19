@@ -24,6 +24,11 @@ export default async function handler(req, res) {
               id
               name
               created_at
+              column_values {
+                id
+                text
+                value
+              }
             }
           }
         }
@@ -51,15 +56,35 @@ export default async function handler(req, res) {
 
     // Send Telegram notification for each new item
     for (const item of newItems) {
-      const message = `🆕 New item added to Monday.com!\n\n📋 Name: ${item.name}\n🆔 ID: ${item.id}\n⏰ Created: ${new Date(item.created_at).toLocaleString()}`;
+      // Extract column values
+      const getColumnValue = (columnId) => {
+        const column = item.column_values.find(col => col.id === columnId);
+        return column?.text || '-';
+      };
+
+      // Try common column IDs - adjust these based on your actual board structure
+      const twitter = getColumnValue('text') || getColumnValue('text4') || getColumnValue('text__1');
+      const platform = getColumnValue('text0') || getColumnValue('text8') || getColumnValue('text1');
+      const comment = getColumnValue('long_text') || getColumnValue('text9');
+
+      const message = `🆕 New item added to Outbound\n\n📋 Project: ${item.name}\n🐦 Twitter: ${twitter}\n💻 Platform: ${platform}\n💬 Comment: ${comment}`;
       
+      // Send message with inline keyboard (voting buttons)
       await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
           text: message,
-          parse_mode: 'HTML'
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '📞 Reach out', callback_data: `vote_reachout_${item.id}` },
+                { text: '❌ Pass', callback_data: `vote_pass_${item.id}` },
+                { text: '✅ Already Reached Out', callback_data: `vote_already_${item.id}` }
+              ]
+            ]
+          }
         })
       });
     }
